@@ -1,0 +1,9 @@
+.tidy_child ul {
+	list-style:none;
+	padding:0 0.5em 0 0.5em;
+}
+
+.tidy_child {
+	display:block;
+	float:left;
+}
