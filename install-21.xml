@@ -1,0 +1,132 @@
+<?xml version="1.0"?>
+<!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
+<modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
+	<id>Arantor:Tidy_Child_Boards</id>
+	<version>2.0.1</version>
+
+	<!-- Add our settings and load the language file. It's a kind of magic. -->
+	<file name="$sourcedir/ManageSettings.php">
+		<operation>
+			<search position="before"><![CDATA[array('check', 'timeLoadPageEnable'),]]></search>
+			<add><![CDATA[
+			'',
+			array('select', loadLanguage('tidychildboards/TidyChildBoards') ? 'tidy_child_boards' : 'tidy_child_boards', array(1 => $txt['tidy_child_boards_no'], 2 => $txt['tidy_child_boards_2col'], 3 => $txt['tidy_child_boards_3col'], 4 => $txt['tidy_child_boards_4col'])),
+			array('check', 'tidy_child_boards_bold'),
+			array('check', 'tidy_child_boards_icon'),
+			array('check', 'tidy_child_boards_new'),]]></add>
+		</operation>
+	</file>
+
+	<file name="$sourcedir/Subs-BoardIndex.php">
+		<operation>
+			<search position="replace"><![CDATA[// By now we should know the most recent post...if we wanna know it that is.]]></search>
+			<add><![CDATA[// Now we tidy the child boards. As if by magic.
+	function tidyChildBoards(&$board)
+	{
+		global $modSettings, $context, $settings, $scripturl, $txt;
+
+		$limit = ceil(count($board['children']) / $modSettings['tidy_child_boards']);
+		$children = array();
+		$this_count = $limit + 1;
+		$this_division = 0;
+		foreach ($board['children'] as $child)
+		{
+			if ($this_count >= $limit)
+			{
+				$this_division++;
+				$this_count = 0;
+			}
+			$children[$this_division][] = $child;
+			$this_count++;
+		}
+
+		// Having split the board into columns, dump the original children
+		// and build the new layout
+		unset ($board['children']);
+		$board['description'] .= '<div class="board_children">';
+		foreach ($children as $child_block)
+		{
+			$board['description'] .= '<div class="tidy_child"><ul>';
+			foreach ($child_block as $child)
+			{
+				$board['description'] .= '<li>';
+				if(!empty($modSettings['tidy_child_boards_icon']))
+				{
+                    $board_class = 'off';
+                    if ($child['is_redirect']) $board_class = 'redirect';
+                    elseif ($child['new'] || $context['user']['is_guest']) $board_class = 'on';
+                    $board['description'] .= '<span class="tidyboardimg tidyboardimg_' . $board_class . '"' . '></span> ';
+                }
+
+				if (!$child['is_redirect'])
+					$child['link'] = '<a href="' . $child['href'] . '" ' . ($child['new'] ? 'class="new_posts" ' : '') . 'title="' . ($child['new'] ? $txt['new_posts'] : $txt['old_posts']) . ' (' . $txt['board_topics'] . ': ' . comma_format($child['topics']) . ', ' . $txt['posts'] . ': ' . comma_format($child['posts']) . ')">' . $child['name'] . '</a>';
+				else
+					$child['link'] = '<a href="' . $child['href'] . '" title="' . comma_format($child['posts']) . ' ' . $txt['redirects'] . '">' . $child['name'] . '</a>';
+
+				if (!empty($modSettings['tidy_child_boards_new']) && $child['new'])
+					$child['link'] .= ' <a href="' . $child['href'] . '" title="' . $txt['new_posts'] . ' (' . $txt['board_topics'] . ': ' . comma_format($child['topics']) . ', ' . $txt['posts'] . ': ' . comma_format($child['posts']) . ')"><img src="' . $settings['lang_images_url'] . '/new.gif" class="new_posts" alt="" /></a>';
+
+				// Has it posts awaiting approval?
+				if ($child['can_approve_posts'] && ($child['unapproved_posts'] | $child['unapproved_topics']))
+					$child['link'] .= ' <a href="' . $scripturl . '?action=moderate;area=postmod;sa=' . ($child['unapproved_topics'] > $child['unapproved_posts'] ? 'topics' : 'posts') . ';brd=' . $child['id'] . ';' . $context['session_var'] . '=' . $context['session_id'] . '" title="' . sprintf($txt['unapproved_posts'], $child['unapproved_topics'], $child['unapproved_posts']) . '" class="moderation_link">(!)</a>';
+
+				if(!empty($modSettings['tidy_child_boards_bold']) && $child['new'])
+					$child['link'] = '<strong>' . $child['link'] . '</strong>';
+
+				$board['description'] .= $child['link'];
+
+				$board['description'] .= '</li>';
+			}
+			$board['description'] .= '</ul></div>';
+		}
+		$board['description'] .= '</div>';
+	}
+
+	$add_header = false;
+	if (!empty($modSettings['tidy_child_boards']) && $modSettings['tidy_child_boards'] > 1)
+	{
+		if (!empty($boardIndexOptions['include_categories']))
+		{
+			// Doing the full listing
+			foreach ($categories as $cat_id => $cat)
+			{
+				foreach ($cat['boards'] as $board_id => $this_board)
+				{
+					if (!empty($this_board['children']))
+					{
+						tidyChildBoards($this_board);
+						$categories[$cat_id]['boards'][$board_id] = $this_board;
+						$add_header = true;
+					}
+				}
+			}
+		}
+		else
+		{
+			// Doing a single board
+			foreach ($this_category as $board_id => $this_board)
+			{
+				if (!empty($this_board['children']))
+				{
+					tidyChildBoards($this_board);
+					$this_category[$board_id] = $this_board;
+					$add_header = true;
+				}
+			}
+		}
+	}
+
+	if (empty($context['html_headers']))
+		$context['html_headers'] = '';
+
+	if ($add_header)
+	{
+		$context['html_headers'] .= '
+	<link rel="stylesheet" type="text/css" href="' . $settings['default_theme_url'] . '/css/tidychildboards21.css?fin21" />
+	<style type="text/css">.tidy_child { width:' . floor(90/$modSettings['tidy_child_boards']) . '%; }</style>';
+	}
+
+	// By now we should know the most recent post...if we wanna know it that is.]]></add>
+		</operation>
+	</file>
+</modification>
