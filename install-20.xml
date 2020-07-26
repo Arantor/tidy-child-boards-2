@@ -10,7 +10,7 @@
 			<search position="before"><![CDATA[array('check', 'enableVBStyleLogin'),]]></search>
 			<add><![CDATA[
 			'',
-			array('select', loadLanguage('tidychildboards/TidyChildBoards') ? 'tidy_child_boards' : 'tidy_child_boards', array(1 => $txt['tidy_child_boards_no'], 2 => $txt['tidy_child_boards_2col'], 3 => $txt['tidy_child_boards_3col'], 4 => $txt['tidy_child_boards_4col'])),
+			array('select', loadLanguage('TidyChildBoards/TidyChildBoards') ? 'tidy_child_boards' : 'tidy_child_boards', array(1 => $txt['tidy_child_boards_no'], 2 => $txt['tidy_child_boards_2col'], 3 => $txt['tidy_child_boards_3col'], 4 => $txt['tidy_child_boards_4col'])),
 			array('check', 'tidy_child_boards_bold'),
 			array('check', 'tidy_child_boards_icon'),
 			array('check', 'tidy_child_boards_new'),]]></add>
@@ -117,7 +117,7 @@
 	if ($add_header)
 	{
 		$context['html_headers'] .= '
-	<link rel="stylesheet" type="text/css" href="' . $settings['default_theme_url'] . '/css/tidychildboards2.css?fin20" />
+	<link rel="stylesheet" type="text/css" href="' . $settings['default_theme_url'] . '/css/tidychildboards.css?fin20" />
 	<style type="text/css">.tidy_child { width:' . floor(90/$modSettings['tidy_child_boards']) . '%; }</style>';
 	}
 
