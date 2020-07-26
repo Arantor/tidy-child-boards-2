@@ -2,15 +2,15 @@
 <!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
 <modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
 	<id>Arantor:Tidy_Child_Boards</id>
-	<version>2.0</version>
+	<version>2.0.1</version>
 
 	<!-- Add our settings and load the language file. It's a kind of magic. -->
 	<file name="$sourcedir/ManageSettings.php">
 		<operation>
-			<search position="before"><![CDATA[array('check', 'enableVBStyleLogin'),]]></search>
+			<search position="before"><![CDATA[array('check', 'timeLoadPageEnable'),]]></search>
 			<add><![CDATA[
 			'',
-			array('select', loadLanguage('tidychildboards/TidyChildBoards') ? 'tidy_child_boards' : 'tidy_child_boards', array(1 => $txt['tidy_child_boards_no'], 2 => $txt['tidy_child_boards_2col'], 3 => $txt['tidy_child_boards_3col'], 4 => $txt['tidy_child_boards_4col'])),
+			array('select', loadLanguage('TidyChildBoards/TidyChildBoards') ? 'tidy_child_boards' : 'tidy_child_boards', array(1 => $txt['tidy_child_boards_no'], 2 => $txt['tidy_child_boards_2col'], 3 => $txt['tidy_child_boards_3col'], 4 => $txt['tidy_child_boards_4col'])),
 			array('check', 'tidy_child_boards_bold'),
 			array('check', 'tidy_child_boards_icon'),
 			array('check', 'tidy_child_boards_new'),]]></add>
@@ -51,15 +51,20 @@
 			{
 				$board['description'] .= '<li>';
 				if(!empty($modSettings['tidy_child_boards_icon']))
-					$board['description'] .=  '<img src="' . $settings['images_url'] . '/' . ($child['new'] ? 'on' : 'off') . '.png" class="tidyboardimg" alt="" /> ';
+				{
+                    $board_class = 'off';
+                    if ($child['is_redirect']) $board_class = 'redirect';
+                    elseif ($child['new'] || $context['user']['is_guest']) $board_class = 'on';
+                    $board['description'] .= '<span class="tidyboardimg tidyboardimg_' . $board_class . '"' . '></span> ';
+                }
 
 				if (!$child['is_redirect'])
-					$child['link'] = '<a href="' . $child['href'] . '" ' . ($child['new'] ? 'class="new_posts" ' : '') . 'title="' . ($child['new'] ? $txt['new_posts'] : $txt['old_posts']) . ' (' . $txt['board_topics'] . ': ' . comma_format($child['topics']) . ', ' . $txt['posts'] . ': ' . comma_format($child['posts']) . ')">' . $child['name'] . '</a>';
+					$child['link'] = '<a href="' . $child['href'] . '" title="' . ($child['new'] ? $txt['new_posts'] : $txt['old_posts']) . ' (' . $txt['board_topics'] . ': ' . comma_format($child['topics']) . ', ' . $txt['posts'] . ': ' . comma_format($child['posts']) . ')">' . $child['name'] . '</a>';
 				else
 					$child['link'] = '<a href="' . $child['href'] . '" title="' . comma_format($child['posts']) . ' ' . $txt['redirects'] . '">' . $child['name'] . '</a>';
 
 				if (!empty($modSettings['tidy_child_boards_new']) && $child['new'])
-					$child['link'] .= ' <a href="' . $child['href'] . '" title="' . $txt['new_posts'] . ' (' . $txt['board_topics'] . ': ' . comma_format($child['topics']) . ', ' . $txt['posts'] . ': ' . comma_format($child['posts']) . ')"><img src="' . $settings['lang_images_url'] . '/new.gif" class="new_posts" alt="" /></a>';
+					$child['link'] .= ' <a href="' . $child['href'] . '" title="' . $txt['new_posts'] . ' (' . $txt['board_topics'] . ': ' . comma_format($child['topics']) . ', ' . $txt['posts'] . ': ' . comma_format($child['posts']) . ')">' . ($child['new'] ? '<span class="new_posts">' . $txt['new'] . '</span>' : '') . '</a>';
 
 				// Has it posts awaiting approval?
 				if ($child['can_approve_posts'] && ($child['unapproved_posts'] | $child['unapproved_topics']))
@@ -117,7 +122,7 @@
 	if ($add_header)
 	{
 		$context['html_headers'] .= '
-	<link rel="stylesheet" type="text/css" href="' . $settings['default_theme_url'] . '/css/tidychildboards2.css?fin20" />
+	<link rel="stylesheet" type="text/css" href="' . $settings['default_theme_url'] . '/css/tidychildboards.css?fin21" />
 	<style type="text/css">.tidy_child { width:' . floor(90/$modSettings['tidy_child_boards']) . '%; }</style>';
 	}
 
